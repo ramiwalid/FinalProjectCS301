@@ -19,24 +19,20 @@ def preprocessing(data):
     account for each column with equal importance. Dropped employee sentiment because encoding it loses all the informtion
     that it offers.
     """
-    df_encoded = pd.get_dummies(data, columns=['Industry', 'Country', 'GenAI Tool'])
+    df_encoded = pd.get_dummies(df, columns=['Industry', 'Country']) 
     df_encoded = df_encoded.drop('Employee Sentiment', axis=1)
 
-    # self-explanatory
-    df_scaled = df_encoded.copy()
+    df_encoded['GenAI_Tool_Encoded'] = df['GenAI Tool'].astype('category').cat.codes
 
-    # The name of the companies doesn't matter in the actual training
+    df_scaled = df_encoded.copy()
     df_scaled = df_scaled.drop('Company Name', axis=1)
 
-    # self-explanatory
     scaler = StandardScaler()
 
-    # numeric columns
     numerics = ['Adoption Year', 'Number of Employees Impacted', 
-                    'New Roles Created', 'Training Hours Provided', 
-                    'Productivity Change (%)']
+                'New Roles Created', 'Training Hours Provided', 
+                'Productivity Change (%)']
 
-    # Scaling
     df_scaled[numerics] = scaler.fit_transform(df_encoded[numerics])
 
     return {'original': data, 'encoded': df_encoded, 'scaled': df_scaled}
