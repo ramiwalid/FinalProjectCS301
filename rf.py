@@ -44,8 +44,8 @@ test_mae = mean_absolute_error(y_test, y_pred_test)
 
 print(f"\nTraining RMSE: ${train_rmse}")
 print(f"Test RMSE: ${test_rmse}")
-print(f"Training R²: {train_r2}")
-print(f"Test R²: {test_r2}")
+print(f"Training R^2: {train_r2}")
+print(f"Test R^2: {test_r2}")
 print(f"Test MAE: ${test_mae}")
 
 # Feature importance
