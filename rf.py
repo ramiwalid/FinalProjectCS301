@@ -3,15 +3,13 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
-
-# Import your preprocessed data with new features
 from preprocessing import results
 
 # Prepare features and target
 X = results.drop('price', axis=1)
 y = results['price']
 
-# Data validation
+# Don't brick the program
 inf_mask = np.isinf(X).any(axis=1)
 nan_mask = np.isnan(X).any(axis=1)
 
@@ -20,10 +18,10 @@ valid_mask = ~(inf_mask | nan_mask)
 X_clean = X[valid_mask]
 y_clean = y[valid_mask]
 
-# Split the data
+# Splitting
 X_train, X_test, y_train, y_test = train_test_split(X_clean, y_clean, test_size=0.1, random_state=42)
 
-# Use the best model
+# Model
 rf_model = RandomForestRegressor(
     n_estimators=200,
     max_depth=12,
