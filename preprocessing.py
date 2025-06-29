@@ -1,38 +1,30 @@
 import pandas as pd
-from sklearn.preprocessing import StandardScaler
 
-# Initialize dataframe
-df = pd.read_csv('genaidataset.csv')
+df = pd.read_csv('USA Housing Dataset.csv')
 
-def preprocessing(data):
-
-    # NaN value check (There aren't any)
+def pre_process(data):
+    # NaN check
     if data.isnull().values.any():
-
-        print(data.isnull().sum())
-
+        print("There are null values.")
     else:
-        print("No missing values.")
+        print("No missing values")
+
+    # Houses with a price of 0 are most likely bad data. Removed for sake of keeping things predictable.
+    zero_price_count = len(data[data['price'] == 0])
+    print(f"Houses with zero price count: {zero_price_count}")
+    data = data[data['price'] > 0]
+
+    # Check city count.
+    print(f"There are {len(data['city'].value_counts())} unique cities.")
 
     """
-    One-hot encoding for our categorical features. No inherent order between the columns, and this will allow our models to
-    account for each column with equal importance. Dropped employee sentiment because encoding it loses all the informtion
-    that it offers.
+    Dropped these columns because of redundancy/feature space consideration. The timeframe is short, only 2 months, and
+    the market is reflected in the data anyway. Streets are unique values that blow up the feature space when encoded, and
+    statezip is redundant with city. Countries contributes nothing because every house is in the USA. There are also 43 different
+    cities and the feature space is still rich without it, so I dropped that as well for more important info.
     """
-    df_encoded = pd.get_dummies(df, columns=['Industry', 'Country']) 
-    df_encoded = df_encoded.drop('Employee Sentiment', axis=1)
+    data = data.drop(columns=['date', 'street', 'statezip', 'country', 'city'])
 
-    df_encoded['GenAI_Tool_Encoded'] = df['GenAI Tool'].astype('category').cat.codes
+    return data
 
-    df_scaled = df_encoded.copy()
-    df_scaled = df_scaled.drop('Company Name', axis=1)
-
-    scaler = StandardScaler()
-
-    numerics = ['Adoption Year', 'Number of Employees Impacted', 
-                'New Roles Created', 'Training Hours Provided', 
-                'Productivity Change (%)']
-
-    df_scaled[numerics] = scaler.fit_transform(df_encoded[numerics])
-
-    return {'original': data, 'encoded': df_encoded, 'scaled': df_scaled}
+results = pre_process(df)
