@@ -52,6 +52,24 @@ def pre_process(data):
     data = pd.get_dummies(data, columns=['city_grouped'], prefix='city')
     
     """
+    Remove outliers using IQR method for key features
+    """
+    
+    # Define columns to check for outliers
+    outlier_columns = ['price', 'sqft_living', 'sqft_lot', 'bedrooms', 'bathrooms']
+    
+    for col in outlier_columns:
+        if col in data.columns:
+            Q1 = data[col].quantile(0.25)
+            Q3 = data[col].quantile(0.75)
+            IQR = Q3 - Q1
+            lower_bound = Q1 - 1.5 * IQR
+            upper_bound = Q3 + 1.5 * IQR
+                        
+            # Remove outliers
+            data = data[(data[col] >= lower_bound) & (data[col] <= upper_bound)]
+        
+    """
     Dropped these columns because of redundancy/feature space consideration. The timeframe is short, only 2 months, and
     the market is reflected in the data anyway. Streets are unique values that blow up the feature space when encoded, and
     statezip is redundant with city. Countries contributes nothing because every house is in the USA. Also dropping yr built 

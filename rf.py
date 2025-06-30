@@ -1,34 +1,31 @@
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
 from preprocessing import results
 
-# Prepare features and target
+# Prepare features
 X = results.drop('price', axis=1)
 y = results['price']
 
-# Don't brick the entire program
-numeric_cols = X.select_dtypes(include=[np.number]).columns
-inf_mask = np.isinf(X[numeric_cols]).any(axis=1)
-nan_mask = np.isnan(X[numeric_cols]).any(axis=1)
+# Split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Remove rows with infinite or NaN values
-valid_mask = ~(inf_mask | nan_mask)
-X_clean = X[valid_mask]
-y_clean = y[valid_mask]
-
-# Splitting
-X_train, X_test, y_train, y_test = train_test_split(X_clean, y_clean, test_size=0.1, random_state=42)
-
-# Model
+# Reduced complexity model to prevent overfitting
 rf_model = RandomForestRegressor(
-    n_estimators=200,
+    n_estimators=500,
     max_depth=12,
     min_samples_split=10,
-    min_samples_leaf=5
+    min_samples_leaf=10,
+    max_features='sqrt',
+    random_state=42
 )
+
+# Cross-validation
+cv_scores = cross_val_score(rf_model, X_train, y_train, cv=5, scoring='r2')
+print(f"Cross-validation R^2 scores: {cv_scores}")
+print(f"Mean CV R^2: {cv_scores.mean():.4f}")
 
 rf_model.fit(X_train, y_train)
 
@@ -43,25 +40,30 @@ train_r2 = r2_score(y_train, y_pred_train)
 test_r2 = r2_score(y_test, y_pred_test)
 test_mae = mean_absolute_error(y_test, y_pred_test)
 
-print(f"\nTraining RMSE: ${train_rmse}")
-print(f"Test RMSE: ${test_rmse}")
-print(f"Training R^2: {train_r2}")
-print(f"Test R^2: {test_r2}")
-print(f"Test MAE: ${test_mae}")
+print(f"\nTraining RMSE: ${train_rmse:.2f}")
+print(f"Test RMSE: ${test_rmse:.2f}")
+print(f"Training R^2: {train_r2:.4f}")
+print(f"Test R^2: {test_r2:.4f}")
+print(f"Test MAE: ${test_mae:.2f}")
 
 # Feature importance
 feature_importance = pd.DataFrame({
-    'feature': X_clean.columns,
+    'feature': X.columns,
     'importance': rf_model.feature_importances_
 }).sort_values('importance', ascending=False)
 
 print("\nFeature Importance (Top 10)")
 print(feature_importance.head(10).to_string(index=False))
 
-# Check for overfitting
-overfit_ratio = train_r2 / test_r2
-print(f"\nTrain R^2 / Test R^2 ratio: {overfit_ratio}")
-if overfit_ratio > 1.1:
-    print("Model might be overfitting")
+# Overfitting check
+overfit_ratio = train_r2 / test_r2 if test_r2 > 0 else float('inf')
+rmse_ratio = test_rmse / train_rmse if train_rmse > 0 else float('inf')
+
+print(f"\nTrain R^2 / Test R^2 ratio: {overfit_ratio:.4f}")
+print(f"Test RMSE / Train RMSE ratio: {rmse_ratio:.4f}")
+print(f"CV Mean R^2: {cv_scores.mean():.4f}")
+
+if overfit_ratio > 1.15:
+    print("\nModel is probably overfitting")
 else:
-    print("Model generalization looks fine")
+    print("\nModel generalization looks fine")
