@@ -15,12 +15,11 @@ def pre_process(data):
     print(f"Houses with zero price count: {zero_price_count}")
     data = data[data['price'] > 0].copy()
 
+    """
+    Feature engineering
+    """
     # Check city count
     print(f"There are {len(data['city'].value_counts())} unique cities.")
-
-    """
-    Attempting feature engineering for increased performance.
-    """
 
     # Age of house is more interpretable than year built
     data['house_age'] = 2014 - data['yr_built']
@@ -50,10 +49,6 @@ def pre_process(data):
         
     # Encode the grouped cities
     data = pd.get_dummies(data, columns=['city_grouped'], prefix='city')
-    
-    """
-    Remove outliers using IQR method for key features
-    """
     
     # Define columns to check for outliers
     outlier_columns = ['price', 'sqft_living', 'sqft_lot', 'bedrooms', 'bathrooms']
