@@ -9,9 +9,10 @@ from preprocessing import results
 X = results.drop('price', axis=1)
 y = results['price']
 
-# Don't brick the program
-inf_mask = np.isinf(X).any(axis=1)
-nan_mask = np.isnan(X).any(axis=1)
+# Don't brick the entire program
+numeric_cols = X.select_dtypes(include=[np.number]).columns
+inf_mask = np.isinf(X[numeric_cols]).any(axis=1)
+nan_mask = np.isnan(X[numeric_cols]).any(axis=1)
 
 # Remove rows with infinite or NaN values
 valid_mask = ~(inf_mask | nan_mask)

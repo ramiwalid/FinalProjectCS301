@@ -13,7 +13,7 @@ def pre_process(data):
     # Houses with a price of 0 are most likely bad data. Removed for sake of keeping things predictable
     zero_price_count = len(data[data['price'] == 0])
     print(f"Houses with zero price count: {zero_price_count}")
-    data = data[data['price'] > 0].copy()  # Use copy() to avoid SettingWithCopyWarning
+    data = data[data['price'] > 0].copy()
 
     # Check city count
     print(f"There are {len(data['city'].value_counts())} unique cities.")
@@ -41,15 +41,26 @@ def pre_process(data):
     # Above ground ratio
     data['above_ground_ratio'] = data['sqft_above'] / data['sqft_living'].replace(0, 1)
     
+    # Get city counts
+    city_counts = data['city'].value_counts()
+    
+    # Keep top 10 cities, group rest as 'Other'
+    top_cities = city_counts.head(10).index.tolist()
+    data['city_grouped'] = data['city'].apply(lambda x: x if x in top_cities else 'Other')
+        
+    # Encode the grouped cities
+    data = pd.get_dummies(data, columns=['city_grouped'], prefix='city')
+    
     """
     Dropped these columns because of redundancy/feature space consideration. The timeframe is short, only 2 months, and
     the market is reflected in the data anyway. Streets are unique values that blow up the feature space when encoded, and
     statezip is redundant with city. Countries contributes nothing because every house is in the USA. Also dropping yr built 
-    and yr renovated since we extracted the useful information into house age and renovated features.
+    and yr renovated since we extracted the useful information into house age and renovated features. To prevent cities from blowing
+    up the feature space, I encoded them into the top 10 cities and then an "other" group.
     """
     columns_to_drop = ['date', 'street', 'statezip', 'country', 'city', 'yr_built', 'yr_renovated']
     data = data.drop(columns=columns_to_drop)
-
+    
     return data
 
 results = pre_process(df)
